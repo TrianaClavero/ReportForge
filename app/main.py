@@ -1,7 +1,6 @@
 from fastapi import FastAPI
+from app.routes import upload
 
 app = FastAPI()
 
-@app.get("/")
-def home():
-    return {"message": "Servidor en marcha 🚀"}
+app.include_router(upload.router)
