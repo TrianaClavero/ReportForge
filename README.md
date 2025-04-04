@@ -31,10 +31,27 @@ ReportForge/
 
 ## 🛠 Setup
 
-```bash
+```
 # Create virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
+```
+---
+## Available Endpoints
+
+### POST `/upload`
+
+Uploads a CSV file and returns:
+
+- List of columns  
+- Data types  
+- Basic statistics
+
+#### Example:
+
+```bash
+curl -X POST http://127.0.0.1:8000/upload \
+  -F 'file=@file.csv'
