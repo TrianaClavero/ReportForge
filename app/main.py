@@ -2,10 +2,21 @@ import os
 import json
 import uuid
 import io
+import pdfkit
 import pandas as pd
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import FileResponse
-from fastapi.responses import JSONResponse
+from fastapi import (
+    FastAPI, 
+    UploadFile, 
+    File,
+    HTTPException, 
+    Request)
+from fastapi.responses import (
+    FileResponse,
+    JSONResponse,
+    HTMLResponse,
+    Response
+)
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 UPLOAD_FOLDER = "uploads"
@@ -59,7 +70,6 @@ async def download_json(file: UploadFile = File(...)):
             "summary": json.loads(df.describe(include="all").fillna("").to_json())
         }
 
-        # Crear archivo temporal JSON
         output_filename = f"{uuid.uuid4()}.json"
         output_path = os.path.join("tmp", output_filename)
         os.makedirs("tmp", exist_ok=True)
@@ -70,3 +80,57 @@ async def download_json(file: UploadFile = File(...)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating JSON: {e}")
+
+templates = Jinja2Templates(directory="app/templates")
+
+@app.post("/report", response_class=HTMLResponse)
+async def generate_report(request: Request, file: UploadFile = File(...)):
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are allowed.")
+    try:
+        contents = await file.read()
+        df = pd.read_csv(io.StringIO(contents.decode("utf-8")))
+
+        summary = df.describe(include="all").to_dict()
+        summary = {k: {stat: ("" if pd.isna(v) else v) for stat, v in v_dict.items()} for k, v_dict in summary.items()}
+
+        return templates.TemplateResponse("report.html", {
+            "request": request,
+            "filename": file.filename,
+            "columns": df.columns.tolist(),
+            "dtypes": df.dtypes.apply(str).to_dict(),
+            "summary": summary,
+        })
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating report: {str(e)}")
+    
+@app.post("/report/pdf")
+async def generate_report_pdf(file: UploadFile = File(...)):
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="Only CSV files are supported")
+
+    try:
+        contents = await file.read()
+        df = pd.read_csv(io.StringIO(contents.decode("utf-8")))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error reading CSV: {str(e)}")
+
+    summary = df.describe(include='all').to_dict()
+    dtypes = df.dtypes.astype(str).to_dict()
+    columns = df.columns.tolist()
+
+    html = templates.get_template("report.html").render(
+        filename=file.filename,
+        columns=columns,
+        dtypes=dtypes,
+        summary=summary,
+    )
+
+    try:
+        pdf = pdfkit.from_string(html, False)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating PDF: {str(e)}")
+
+    return Response(content=pdf, media_type="application/pdf", headers={
+        "Content-Disposition": f"attachment; filename={file.filename.replace('.csv', '')}_report.pdf"
+    })    
