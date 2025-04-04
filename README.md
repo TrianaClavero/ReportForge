@@ -8,8 +8,8 @@ The goal is to provide a flexible and customizable system for uploading structur
 ## 🚀 Features (planned)
 
 - Upload CSV files via API
-- Apply customizable transformations and filters
-- Generate downloadable reports in various formats
+- Generate downloadable reports in JSON, HTML, and PDF formats
+- Basic data summary using `pandas`
 - RESTful API built with FastAPI
 - CLI tools for local generation (future)
 - Optional authentication layer (future)
