@@ -1,29 +1,35 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+import os
 import pandas as pd
-from io import StringIO
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
+UPLOAD_FOLDER = "uploads"
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="Only CSV files are supported")
 
+    file_location = os.path.join(UPLOAD_FOLDER, file.filename)
+
     try:
-        contents = await file.read()
-        decoded = contents.decode("utf-8")
-        df = pd.read_csv(StringIO(decoded))
+        with open(file_location, "wb") as f:
+            content = await file.read()
+            f.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving file: {e}")
+
+    try:
+        df = pd.read_csv(file_location)
 
         response = {
             "filename": file.filename,
-            "columns": list(df.columns),
-            "dtypes": df.dtypes.apply(str).to_dict(),
+            "columns": df.columns.tolist(),
+            "dtypes": df.dtypes.astype(str).to_dict(),
             "summary": df.describe(include="all").fillna("").to_dict()
         }
 
-        return response
-
+        return JSONResponse(content=response)
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"{type(e).__name__}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error reading CSV: {e}")
