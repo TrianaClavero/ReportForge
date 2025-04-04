@@ -1,0 +1,54 @@
+{
+    "filename": "inventario.csv",
+    "columns": [
+        "Producto",
+        "Precio",
+        "Stock"
+    ],
+    "dtypes": {
+        "Producto": "object",
+        "Precio": "float64",
+        "Stock": "int64"
+    },
+    "summary": {
+        "Producto": {
+            "count": 4,
+            "unique": 4,
+            "top": "Laptop",
+            "freq": 1,
+            "mean": "",
+            "std": "",
+            "min": "",
+            "25%": "",
+            "50%": "",
+            "75%": "",
+            "max": ""
+        },
+        "Precio": {
+            "count": 4.0,
+            "unique": "",
+            "top": "",
+            "freq": "",
+            "mean": 392.8725,
+            "std": 552.734151009,
+            "min": 25.0,
+            "25%": 40.7425,
+            "50%": 172.995,
+            "75%": 525.125,
+            "max": 1200.5
+        },
+        "Stock": {
+            "count": 4.0,
+            "unique": "",
+            "top": "",
+            "freq": "",
+            "mean": 66.25,
+            "std": 64.9839723829,
+            "min": 10.0,
+            "25%": 17.5,
+            "50%": 52.5,
+            "75%": 101.25,
+            "max": 150.0
+        }
+    }
+}
